@@ -7,32 +7,24 @@ import sqlite3
 app = Flask(__name__)
 
 
-# ==========================================================
-# CONFIGURAÇÃO DO BANCO DE DADOS
-# ==========================================================
-
-# Caminho da pasta principal do projeto
-# Este arquivo está em: codigo/dashboard/app.py
-# Então usamos parents[2] para voltar até a pasta principal.
+# Caminho do banco de dados.
+# Como o app.py está dentro de codigo/dashboard, voltamos duas pastas
+# para chegar na raiz do projeto.
 PASTA_PROJETO = Path(__file__).resolve().parents[2]
-
-# Caminho da pasta banco_de_dados
 PASTA_BANCO = PASTA_PROJETO / "banco_de_dados"
-
-# Caminho final do arquivo do banco
 CAMINHO_BANCO = PASTA_BANCO / "semaforo_inteligente.db"
 
 
 def conectar_banco():
-    """
-    Cria uma conexão com o banco SQLite.
-    """
     return sqlite3.connect(CAMINHO_BANCO)
 
 
 def criar_tabela_se_nao_existir():
     """
-    Cria a tabela de registros do dashboard caso ela ainda não exista.
+    Cria a tabela usada pelo dashboard.
+
+    Por enquanto estamos usando uma tabela única para facilitar os testes.
+    Na documentação do TCC, essa modelagem pode evoluir para tabelas separadas.
     """
 
     PASTA_BANCO.mkdir(exist_ok=True)
@@ -63,7 +55,8 @@ def criar_tabela_se_nao_existir():
 
 def salvar_registro(dados):
     """
-    Salva no banco os dados gerados pelo sistema.
+    Salva no banco as informações exibidas no dashboard.
+    Isso ajuda a criar um histórico para os testes do projeto.
     """
 
     conexao = conectar_banco()
@@ -102,71 +95,58 @@ def salvar_registro(dados):
     conexao.close()
 
 
-# ==========================================================
-# LÓGICA DA IA / SIMULAÇÃO
-# ==========================================================
-
-def calcular_tempo_ia(qtd_veiculos, emergencia=False):
+def calcular_tempo_semaforo(qtd_veiculos, emergencia=False):
     """
-    Simula a decisão da Inteligência Artificial.
+    Define o tempo do semáforo com base na quantidade de veículos.
 
-    Entrada:
-    - quantidade de veículos detectados;
-    - informação de emergência.
-
-    Saída:
-    - tempo ideal do semáforo;
-    - mensagem explicando a decisão.
+    Nesta fase, essa regra representa a lógica inicial do sistema.
+    Depois ela poderá ser substituída ou ajustada com um modelo de IA treinado.
     """
 
     if emergencia:
         return 45, "Veículo de emergência detectado. Liberando corredor prioritário."
 
     if qtd_veiculos <= 5:
-        return 10, "Fluxo baixo. A IA reduziu o tempo verde."
+        return 10, "Fluxo baixo. O sistema reduziu o tempo verde."
     elif qtd_veiculos <= 15:
-        return 20, "Fluxo normal. A IA manteve o tempo padrão."
+        return 20, "Fluxo normal. O sistema manteve o tempo padrão."
     elif qtd_veiculos <= 25:
-        return 34, "A IA aumentou o tempo verde para melhorar o fluxo."
+        return 34, "Fluxo alto. O sistema aumentou o tempo verde para melhorar a passagem."
     else:
-        return 45, "Fluxo intenso. A IA aplicou tempo máximo para reduzir a fila."
+        return 45, "Fluxo intenso. O sistema aplicou o tempo máximo configurado."
 
 
 def calcular_comparacao(qtd_veiculos):
     """
-    Simula a comparação entre semáforo convencional e semáforo inteligente.
+    Compara uma situação de semáforo comum com o sistema inteligente.
 
-    O sistema convencional trabalha com lógica fixa.
-    O sistema inteligente ajusta o funcionamento conforme o fluxo.
+    Os valores são simulados para esta etapa do protótipo.
+    A ideia é mostrar no dashboard o ganho esperado com a adaptação dos tempos.
     """
 
     if qtd_veiculos <= 5:
         tempo_sem_ia = 20
         tempo_com_ia = 18
-
     elif qtd_veiculos <= 15:
         tempo_sem_ia = 40
         tempo_com_ia = 32
-
     elif qtd_veiculos <= 25:
         tempo_sem_ia = 60
         tempo_com_ia = 42
-
     else:
         tempo_sem_ia = 85
         tempo_com_ia = 60
 
     melhora = ((tempo_sem_ia - tempo_com_ia) / tempo_sem_ia) * 100
-    melhora = round(melhora, 1)
-
-    return tempo_sem_ia, tempo_com_ia, melhora
+    return tempo_sem_ia, tempo_com_ia, round(melhora, 1)
 
 
 def gerar_dados_sistema():
     """
-    Gera os dados simulados do sistema.
+    Gera os dados usados pelo dashboard.
 
-    Depois, a quantidade de veículos será substituída pela contagem real da câmera.
+    Por enquanto, a quantidade de veículos é simulada.
+    Quando a câmera for integrada, esse número virá da contagem feita com OpenCV.
     """
 
     cruzamento = 1
@@ -174,10 +154,10 @@ def gerar_dados_sistema():
     tempo_padrao = 20
     emergencia = False
 
-    tempo_ia, decisao = calcular_tempo_ia(veiculos_detectados, emergencia)
+    tempo_ia, decisao = calcular_tempo_semaforo(veiculos_detectados, emergencia)
     tempo_sem_ia, tempo_com_ia, melhora = calcular_comparacao(veiculos_detectados)
 
-    dados = {
+    return {
         "cruzamento": cruzamento,
         "veiculos": veiculos_detectados,
         "tempo_padrao": tempo_padrao,
@@ -191,12 +171,6 @@ def gerar_dados_sistema():
         "data_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    return dados
-
-
-# ==========================================================
-# ROTAS DO FLASK
-# ==========================================================
 
 @app.route("/")
 def index():
@@ -205,28 +179,13 @@ def index():
 
 @app.route("/api/status")
 def status():
-    """
-    Rota usada pelo dashboard.
-
-    Toda vez que o dashboard atualiza, esta rota:
-    1. gera os dados;
-    2. salva no banco;
-    3. envia os dados para a tela.
-    """
-
     dados = gerar_dados_sistema()
     salvar_registro(dados)
-
     return jsonify(dados)
 
 
 @app.route("/api/historico")
 def historico():
-    """
-    Mostra os últimos registros salvos no banco.
-    Esta rota serve para testar se o banco está funcionando.
-    """
-
     conexao = conectar_banco()
     cursor = conexao.cursor()
 
@@ -270,10 +229,6 @@ def historico():
 
     return jsonify(registros)
 
-
-# ==========================================================
-# INICIALIZAÇÃO DO SISTEMA
-# ==========================================================
 
 if __name__ == "__main__":
     criar_tabela_se_nao_existir()
