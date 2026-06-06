@@ -55,24 +55,18 @@ Desenvolver um sistema capaz de:
 
 ## Funcionalidades Atuais
 
-Atualmente o projeto já possui:
+Atualmente o projeto possui:
 
-- dashboard Flask funcionando;
+- dashboard local desenvolvido com Flask;
 - simulação de quantidade de veículos;
-- cálculo de tempo com IA simulada;
-- comparação entre semáforo convencional e inteligente;
+- cálculo inicial do tempo do semáforo conforme o fluxo;
+- comparação entre semáforo convencional e sistema inteligente;
 - cálculo de melhora estimada;
 - registro automático no banco SQLite;
 - histórico dos últimos registros no dashboard.
 
----
+Nesta fase, os dados de veículos ainda são simulados. Essa escolha foi feita para validar primeiro o dashboard, o banco de dados e a lógica de decisão. Nas próximas etapas, os dados simulados serão substituídos pela contagem real feita por câmera com OpenCV.
 
-## Como Rodar o Projeto
-
-### 1. Clonar o repositório
-
-```bash
-git clone https://github.com/PabloKn663/tcc-semaforo-inteligente.git
 ---
 
 ## Dashboard do Sistema
@@ -86,3 +80,12 @@ As imagens abaixo mostram a primeira versão funcional do dashboard do projeto.
 ### Histórico e comparação dos dados
 
 ![Dashboard - Histórico e comparação](imagens/dashboard_v1_1.png)
+
+---
+
+## Como Rodar o Projeto
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/PabloKn663/tcc-semaforo-inteligente.git
