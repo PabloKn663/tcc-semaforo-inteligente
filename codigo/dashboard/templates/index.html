@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Semáforo Inteligente - Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+        }
+
+        header {
+            background-color: #111827;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 34px;
+        }
+
+        header p {
+            margin-top: 12px;
+            font-size: 16px;
+        }
+
+        main {
+            padding: 30px;
+        }
+
+        .cards {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: white;
+            flex: 1;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .valor {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .card-grande {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.12);
+            margin-bottom: 25px;
+        }
+
+        .painel {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.12);
+            margin-bottom: 25px;
+        }
+
+        .painel h2 {
+            margin-top: 0;
+        }
+
+        .emergencia {
+            color: red;
+            font-weight: bold;
+        }
+
+        .comparacao {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .box-comparacao {
+            background-color: white;
+            flex: 1;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .box-comparacao h3 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .tempo-sem-ia {
+            color: #dc2626;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .tempo-com-ia {
+            color: #16a34a;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .melhora {
+            background-color: #ecfdf5;
+            border: 1px solid #16a34a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .melhora span {
+            font-size: 34px;
+            font-weight: bold;
+            color: #16a34a;
+        }
+
+        .barra-area {
+            margin-top: 15px;
+        }
+
+        .barra-label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .barra-fundo {
+            width: 100%;
+            height: 28px;
+            background-color: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .barra-vermelha {
+            height: 100%;
+            background-color: #dc2626;
+            width: 70%;
+            color: white;
+            text-align: center;
+            line-height: 28px;
+        }
+
+        .barra-verde {
+            height: 100%;
+            background-color: #16a34a;
+            width: 50%;
+            color: white;
+            text-align: center;
+            line-height: 28px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #111827;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .tag-positivo {
+            color: #16a34a;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-bottom: 20px;
+            color: #374151;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Semáforo Inteligente - Dashboard</h1>
+        <p>Monitoramento da simulação em tempo real</p>
+    </header>
+
+    <main>
+
+        <section class="cards">
+
+            <div class="card">
+                <h3>Cruzamento</h3>
+                <div class="valor" id="cruzamento">1</div>
+            </div>
+
+            <div class="card">
+                <h3>Veículos Detectados</h3>
+                <div class="valor" id="veiculos">18</div>
+            </div>
+
+            <div class="card">
+                <h3>Tempo Padrão</h3>
+                <div class="valor" id="tempoPadrao">20s</div>
+            </div>
+
+        </section>
+
+        <section class="card-grande">
+            <h3>Tempo Calculado pela IA</h3>
+            <div class="valor" id="tempoIA">34s</div>
+        </section>
+
+        <section class="comparacao">
+
+            <div class="box-comparacao">
+                <h3>Tempo Estimado sem IA</h3>
+                <p class="tempo-sem-ia" id="tempoSemIA">60s</p>
+                <p style="text-align: center;">Modelo convencional com tempo fixo.</p>
+            </div>
+
+            <div class="box-comparacao">
+                <h3>Tempo Estimado com IA</h3>
+                <p class="tempo-com-ia" id="tempoComIA">42s</p>
+                <p style="text-align: center;">Modelo inteligente adaptado ao fluxo.</p>
+            </div>
+
+        </section>
+
+        <section class="melhora">
+            <h3>Melhora Estimada no Fluxo</h3>
+            <span id="melhora">30%</span>
+        </section>
+
+        <section class="painel">
+            <h2>Comparação Visual</h2>
+
+            <div class="barra-area">
+
+                <div class="barra-label">Sistema Convencional</div>
+                <div class="barra-fundo">
+                    <div class="barra-vermelha" id="barraSemIA">60s</div>
+                </div>
+
+                <div class="barra-label">Sistema Inteligente</div>
+                <div class="barra-fundo">
+                    <div class="barra-verde" id="barraComIA">42s</div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="painel">
+            <h2>Decisão do Sistema</h2>
+            <p id="decisao">A IA aumentou o tempo verde para melhorar o fluxo.</p>
+
+            <h3>Status de Emergência</h3>
+            <p class="emergencia" id="emergencia">Nenhuma emergência detectada</p>
+
+            <h3>Registro Atual</h3>
+            <p id="dataHora">Data/Hora: carregando...</p>
+        </section>
+
+        <section class="painel">
+            <h2>Histórico dos Últimos Registros</h2>
+            <p>Esta tabela mostra os últimos dados salvos no banco SQLite durante a simulação.</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Horário</th>
+                        <th>Cruzamento</th>
+                        <th>Veículos</th>
+                        <th>Sem IA</th>
+                        <th>Com IA</th>
+                        <th>Melhora</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaHistorico">
+                    <tr>
+                        <td colspan="7">Carregando histórico...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <footer>
+        Sistema em fase de protótipo acadêmico
+    </footer>
+
+    <script>
+        async function atualizarDashboard() {
+            try {
+                const resposta = await fetch("/api/status");
+                const dados = await resposta.json();
+
+                document.getElementById("cruzamento").textContent = dados.cruzamento;
+                document.getElementById("veiculos").textContent = dados.veiculos;
+                document.getElementById("tempoPadrao").textContent = dados.tempo_padrao + "s";
+                document.getElementById("tempoIA").textContent = dados.tempo_ia + "s";
+
+                document.getElementById("tempoSemIA").textContent = dados.tempo_sem_ia + "s";
+                document.getElementById("tempoComIA").textContent = dados.tempo_com_ia + "s";
+                document.getElementById("melhora").textContent = dados.melhora + "%";
+
+                document.getElementById("decisao").textContent = dados.decisao;
+                document.getElementById("emergencia").textContent = dados.status_emergencia;
+                document.getElementById("dataHora").textContent = "Data/Hora: " + dados.data_hora;
+
+                ajustarBarras(dados.tempo_sem_ia, dados.tempo_com_ia);
+
+            } catch (erro) {
+                console.log("Erro ao atualizar dashboard:", erro);
+            }
+        }
+
+        async function atualizarHistorico() {
+            try {
+                const resposta = await fetch("/api/historico");
+                const historico = await resposta.json();
+
+                const tabela = document.getElementById("tabelaHistorico");
+                tabela.innerHTML = "";
+
+                if (historico.length === 0) {
+                    tabela.innerHTML = "<tr><td colspan='7'>Nenhum registro encontrado.</td></tr>";
+                    return;
+                }
+
+                historico.forEach(registro => {
+                    const linha = document.createElement("tr");
+
+                    linha.innerHTML = `
+                        <td>${registro.id_registro}</td>
+                        <td>${registro.data_hora}</td>
+                        <td>${registro.cruzamento}</td>
+                        <td>${registro.veiculos_detectados}</td>
+                        <td>${registro.tempo_sem_ia}s</td>
+                        <td>${registro.tempo_com_ia}s</td>
+                        <td class="tag-positivo">${registro.melhora_percentual}%</td>
+                    `;
+
+                    tabela.appendChild(linha);
+                });
+
+            } catch (erro) {
+                console.log("Erro ao atualizar histórico:", erro);
+            }
+        }
+
+        function ajustarBarras(tempoSemIA, tempoComIA) {
+            let maiorTempo = Math.max(tempoSemIA, tempoComIA);
+
+            let larguraSemIA = (tempoSemIA / maiorTempo) * 100;
+            let larguraComIA = (tempoComIA / maiorTempo) * 100;
+
+            document.getElementById("barraSemIA").style.width = larguraSemIA + "%";
+            document.getElementById("barraComIA").style.width = larguraComIA + "%";
+
+            document.getElementById("barraSemIA").textContent = tempoSemIA + "s";
+            document.getElementById("barraComIA").textContent = tempoComIA + "s";
+        }
+
+        function atualizarTudo() {
+            atualizarDashboard();
+            atualizarHistorico();
+        }
+
+        atualizarTudo();
+        setInterval(atualizarTudo, 3000);
+    </script>
+
+</body>
+</html>
