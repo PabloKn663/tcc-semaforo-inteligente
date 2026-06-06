@@ -73,3 +73,16 @@ Atualmente o projeto já possui:
 
 ```bash
 git clone https://github.com/PabloKn663/tcc-semaforo-inteligente.git
+---
+
+## Dashboard do Sistema
+
+As imagens abaixo mostram a primeira versão funcional do dashboard do projeto.
+
+### Visão geral do dashboard
+
+![Dashboard - Visão geral](imagens/dashboard_v1.png)
+
+### Histórico e comparação dos dados
+
+![Dashboard - Histórico e comparação](imagens/dashboard_v1_1.png)
