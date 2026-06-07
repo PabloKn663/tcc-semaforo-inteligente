@@ -6,13 +6,16 @@ import sqlite3
 
 app = Flask(__name__)
 
-
 # Caminho do banco de dados.
-# Como o app.py está dentro de codigo/dashboard, voltamos duas pastas
-# para chegar na raiz do projeto.
+# Como este arquivo fica em codigo/dashboard, voltamos duas pastas
+# para chegar até a raiz do projeto.
 PASTA_PROJETO = Path(__file__).resolve().parents[2]
 PASTA_BANCO = PASTA_PROJETO / "banco_de_dados"
 CAMINHO_BANCO = PASTA_BANCO / "semaforo_inteligente.db"
+
+# Esta variável controla por quantas atualizações a emergência fica ativa.
+# Por enquanto é uma simulação. Depois será substituída pela leitura RFID.
+ciclos_emergencia = 0
 
 
 def conectar_banco():
@@ -23,8 +26,8 @@ def criar_tabela_se_nao_existir():
     """
     Cria a tabela usada pelo dashboard.
 
-    Por enquanto estamos usando uma tabela única para facilitar os testes.
-    Na documentação do TCC, essa modelagem pode evoluir para tabelas separadas.
+    Nesta fase usamos uma tabela única para facilitar os testes.
+    Mais para frente, a modelagem pode ser separada em várias tabelas.
     """
 
     PASTA_BANCO.mkdir(exist_ok=True)
@@ -56,7 +59,7 @@ def criar_tabela_se_nao_existir():
 def salvar_registro(dados):
     """
     Salva no banco as informações exibidas no dashboard.
-    Isso ajuda a criar um histórico para os testes do projeto.
+    Isso ajuda a criar um histórico dos testes do projeto.
     """
 
     conexao = conectar_banco()
@@ -99,8 +102,8 @@ def calcular_tempo_semaforo(qtd_veiculos, emergencia=False):
     """
     Define o tempo do semáforo com base na quantidade de veículos.
 
-    Nesta fase, essa regra representa a lógica inicial do sistema.
-    Depois ela poderá ser substituída ou ajustada com um modelo de IA treinado.
+    Nesta fase, a regra é simples para facilitar o entendimento.
+    Depois ela poderá ser ajustada com um modelo de IA treinado.
     """
 
     if emergencia:
@@ -116,15 +119,18 @@ def calcular_tempo_semaforo(qtd_veiculos, emergencia=False):
         return 45, "Fluxo intenso. O sistema aplicou o tempo máximo configurado."
 
 
-def calcular_comparacao(qtd_veiculos):
+def calcular_comparacao(qtd_veiculos, emergencia=False):
     """
-    Compara uma situação de semáforo comum com o sistema inteligente.
+    Compara o semáforo convencional com o sistema inteligente.
 
-    Os valores são simulados para esta etapa do protótipo.
-    A ideia é mostrar no dashboard o ganho esperado com a adaptação dos tempos.
+    Em situação normal, compara o tempo de escoamento do trânsito.
+    Em emergência, compara o tempo de resposta sem prioridade e com prioridade.
     """
 
-    if qtd_veiculos <= 5:
+    if emergencia:
+        tempo_sem_ia = 45
+        tempo_com_ia = 10
+    elif qtd_veiculos <= 5:
         tempo_sem_ia = 20
         tempo_com_ia = 18
     elif qtd_veiculos <= 15:
@@ -145,17 +151,28 @@ def gerar_dados_sistema():
     """
     Gera os dados usados pelo dashboard.
 
-    Por enquanto, a quantidade de veículos é simulada.
-    Quando a câmera for integrada, esse número virá da contagem feita com OpenCV.
+    A quantidade de veículos ainda é simulada.
+    Depois esse número virá da câmera com OpenCV.
     """
+
+    global ciclos_emergencia
 
     cruzamento = 1
     veiculos_detectados = random.randint(3, 32)
     tempo_padrao = 20
-    emergencia = False
+
+    emergencia = ciclos_emergencia > 0
+
+    if emergencia:
+        ciclos_emergencia -= 1
 
     tempo_ia, decisao = calcular_tempo_semaforo(veiculos_detectados, emergencia)
-    tempo_sem_ia, tempo_com_ia, melhora = calcular_comparacao(veiculos_detectados)
+    tempo_sem_ia, tempo_com_ia, melhora = calcular_comparacao(veiculos_detectados, emergencia)
+
+    if emergencia:
+        status_emergencia = "Veículo de emergência detectado"
+    else:
+        status_emergencia = "Nenhuma emergência detectada"
 
     return {
         "cruzamento": cruzamento,
@@ -167,7 +184,7 @@ def gerar_dados_sistema():
         "melhora": melhora,
         "decisao": decisao,
         "emergencia": emergencia,
-        "status_emergencia": "Nenhuma emergência detectada",
+        "status_emergencia": status_emergencia,
         "data_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
@@ -228,6 +245,22 @@ def historico():
         })
 
     return jsonify(registros)
+
+
+@app.route("/api/simular_emergencia", methods=["POST"])
+def simular_emergencia():
+    """
+    Ativa a emergência por algumas atualizações do dashboard.
+
+    Mais para frente, esta ação será substituída pela leitura real da tag RFID.
+    """
+
+    global ciclos_emergencia
+    ciclos_emergencia = 3
+
+    return jsonify({
+        "mensagem": "Emergência simulada ativada com sucesso."
+    })
 
 
 if __name__ == "__main__":

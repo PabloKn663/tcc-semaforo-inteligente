@@ -196,6 +196,20 @@
             color: #16a34a;
             font-weight: bold;
         }
+        .botao-emergencia {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.botao-emergencia:hover {
+    background-color: #b91c1c;
+}
 
         footer {
             text-align: center;
@@ -285,6 +299,9 @@
             <h3>Status de Emergência</h3>
             <p class="emergencia" id="emergencia">Nenhuma emergência detectada</p>
 
+            <button class="botao-emergencia" onclick="simularEmergencia()">
+    Simular Veículo de Emergência
+        </button>
             <h3>Registro Atual</h3>
             <p id="dataHora">Data/Hora: carregando...</p>
         </section>
@@ -391,7 +408,18 @@
             document.getElementById("barraSemIA").textContent = tempoSemIA + "s";
             document.getElementById("barraComIA").textContent = tempoComIA + "s";
         }
+        async function simularEmergencia() {
+    try {
+        await fetch("/api/simular_emergencia", {
+            method: "POST"
+        });
 
+        atualizarTudo();
+
+    } catch (erro) {
+        console.log("Erro ao simular emergência:", erro);
+    }
+}
         function atualizarTudo() {
             atualizarDashboard();
             atualizarHistorico();
