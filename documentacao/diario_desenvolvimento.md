@@ -76,3 +76,15 @@ As próximas etapas previstas são:
 - integrar o ESP32 com LEDs físicos;
 - iniciar testes com OpenCV;
 - substituir os dados simulados por contagem real de veículos.
+
+---
+
+## Etapa 6 - Modo emergência simulado
+
+Foi adicionado um modo de emergência simulado no dashboard.
+
+Essa função permite testar o comportamento do sistema antes da integração física com o RFID RC522.
+
+Ao clicar no botão de emergência, o sistema altera temporariamente o status do cruzamento para emergência, calcula prioridade de passagem e registra o evento no banco de dados.
+
+Mais adiante, esse botão será substituído pela leitura real da tag RFID instalada no veículo prioritário da maquete.
