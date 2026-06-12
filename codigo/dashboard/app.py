@@ -3,19 +3,53 @@ from datetime import datetime
 from pathlib import Path
 import random
 import sqlite3
+import joblib
+import pandas as pd
+
 
 app = Flask(__name__)
 
-# Caminho do banco de dados.
-# Como este arquivo fica em codigo/dashboard, voltamos duas pastas
-# para chegar até a raiz do projeto.
+
+# Caminho principal do projeto
 PASTA_PROJETO = Path(__file__).resolve().parents[2]
+
+# Caminho do banco de dados local
 PASTA_BANCO = PASTA_PROJETO / "banco_de_dados"
 CAMINHO_BANCO = PASTA_BANCO / "semaforo_inteligente.db"
 
-# Esta variável controla por quantas atualizações a emergência fica ativa.
-# Por enquanto é uma simulação. Depois será substituída pela leitura RFID.
+# Caminho do modelo de IA treinado
+CAMINHO_MODELO_IA = (
+    PASTA_PROJETO
+    / "codigo"
+    / "ia"
+    / "modelos"
+    / "modelo_tempo_semaforo.pkl"
+)
+
+# Controla a emergência simulada.
+# Depois, essa parte será substituída pela leitura real do RFID.
 ciclos_emergencia = 0
+
+
+def carregar_modelo_ia():
+    """
+    Carrega o modelo treinado da Árvore de Decisão.
+
+    Se o modelo ainda não existir, o sistema avisa no terminal.
+    """
+
+    if not CAMINHO_MODELO_IA.exists():
+        print("Modelo de IA não encontrado.")
+        print("Execute primeiro:")
+        print(r".\.venv\Scripts\python.exe codigo\ia\treinar_modelo.py")
+        return None
+
+    modelo = joblib.load(CAMINHO_MODELO_IA)
+    print("Modelo de IA carregado com sucesso.")
+    return modelo
+
+
+modelo_ia = carregar_modelo_ia()
 
 
 def conectar_banco():
@@ -26,8 +60,8 @@ def criar_tabela_se_nao_existir():
     """
     Cria a tabela usada pelo dashboard.
 
-    Nesta fase usamos uma tabela única para facilitar os testes.
-    Mais para frente, a modelagem pode ser separada em várias tabelas.
+    Nesta fase do protótipo, mantemos uma tabela simples para registrar os testes.
+    A modelagem final do TCC será apresentada com DER e tabelas normalizadas.
     """
 
     PASTA_BANCO.mkdir(exist_ok=True)
@@ -59,7 +93,6 @@ def criar_tabela_se_nao_existir():
 def salvar_registro(dados):
     """
     Salva no banco as informações exibidas no dashboard.
-    Isso ajuda a criar um histórico dos testes do projeto.
     """
 
     conexao = conectar_banco()
@@ -98,33 +131,62 @@ def salvar_registro(dados):
     conexao.close()
 
 
-def calcular_tempo_semaforo(qtd_veiculos, emergencia=False):
+def prever_tempo_com_ia(qtd_veiculos, emergencia, hora_pico):
     """
-    Define o tempo do semáforo com base na quantidade de veículos.
+    Usa o modelo treinado de IA para prever o tempo ideal do semáforo.
+    """
 
-    Nesta fase, a regra é simples para facilitar o entendimento.
-    Depois ela poderá ser ajustada com um modelo de IA treinado.
+    if modelo_ia is None:
+        # Regra de segurança caso o modelo não esteja carregado.
+        if emergencia:
+            return 45
+        if qtd_veiculos <= 5:
+            return 10
+        if qtd_veiculos <= 15:
+            return 20
+        if qtd_veiculos <= 25:
+            return 34
+        return 45
+
+    entrada = pd.DataFrame([{
+        "veiculos": qtd_veiculos,
+        "emergencia": 1 if emergencia else 0,
+        "hora_pico": 1 if hora_pico else 0
+    }])
+
+    tempo_previsto = modelo_ia.predict(entrada)[0]
+    tempo_previsto = round(float(tempo_previsto))
+
+    # Limites usados na maquete.
+    # Evita tempo muito baixo ou muito alto.
+    tempo_previsto = max(10, min(45, tempo_previsto))
+
+    return tempo_previsto
+
+
+def gerar_mensagem_decisao(qtd_veiculos, emergencia, hora_pico):
+    """
+    Gera a explicação textual da decisão tomada pela IA.
     """
 
     if emergencia:
-        return 45, "Veículo de emergência detectado. Liberando corredor prioritário."
+        return "Veículo de emergência detectado. Liberando corredor prioritário."
 
     if qtd_veiculos <= 5:
-        return 10, "Fluxo baixo. O sistema reduziu o tempo verde."
+        return "Fluxo baixo. A IA reduziu o tempo verde."
     elif qtd_veiculos <= 15:
-        return 20, "Fluxo normal. O sistema manteve o tempo padrão."
+        if hora_pico:
+            return "Fluxo normal em horário de pico. A IA ajustou o tempo para evitar acúmulo."
+        return "Fluxo normal. A IA manteve um tempo intermediário."
     elif qtd_veiculos <= 25:
-        return 34, "Fluxo alto. O sistema aumentou o tempo verde para melhorar a passagem."
+        return "Fluxo alto. A IA aumentou o tempo verde para melhorar a passagem."
     else:
-        return 45, "Fluxo intenso. O sistema aplicou o tempo máximo configurado."
+        return "Fluxo intenso. A IA aplicou tempo maior para reduzir a fila."
 
 
 def calcular_comparacao(qtd_veiculos, emergencia=False):
     """
-    Compara o semáforo convencional com o sistema inteligente.
-
-    Em situação normal, compara o tempo de escoamento do trânsito.
-    Em emergência, compara o tempo de resposta sem prioridade e com prioridade.
+    Compara o modelo convencional com o sistema inteligente.
     """
 
     if emergencia:
@@ -144,15 +206,16 @@ def calcular_comparacao(qtd_veiculos, emergencia=False):
         tempo_com_ia = 60
 
     melhora = ((tempo_sem_ia - tempo_com_ia) / tempo_sem_ia) * 100
+
     return tempo_sem_ia, tempo_com_ia, round(melhora, 1)
 
 
 def gerar_dados_sistema():
     """
-    Gera os dados usados pelo dashboard.
+    Gera os dados exibidos no dashboard.
 
     A quantidade de veículos ainda é simulada.
-    Depois esse número virá da câmera com OpenCV.
+    Depois será substituída pela contagem real com OpenCV.
     """
 
     global ciclos_emergencia
@@ -161,13 +224,31 @@ def gerar_dados_sistema():
     veiculos_detectados = random.randint(3, 32)
     tempo_padrao = 20
 
+    # Simulação simples de horário de pico.
+    # Depois pode ser substituída pelo horário real do sistema.
+    hora_pico = random.choice([False, True])
+
     emergencia = ciclos_emergencia > 0
 
     if emergencia:
         ciclos_emergencia -= 1
 
-    tempo_ia, decisao = calcular_tempo_semaforo(veiculos_detectados, emergencia)
-    tempo_sem_ia, tempo_com_ia, melhora = calcular_comparacao(veiculos_detectados, emergencia)
+    tempo_ia = prever_tempo_com_ia(
+        qtd_veiculos=veiculos_detectados,
+        emergencia=emergencia,
+        hora_pico=hora_pico
+    )
+
+    decisao = gerar_mensagem_decisao(
+        qtd_veiculos=veiculos_detectados,
+        emergencia=emergencia,
+        hora_pico=hora_pico
+    )
+
+    tempo_sem_ia, tempo_com_ia, melhora = calcular_comparacao(
+        qtd_veiculos=veiculos_detectados,
+        emergencia=emergencia
+    )
 
     if emergencia:
         status_emergencia = "Veículo de emergência detectado"
@@ -185,6 +266,8 @@ def gerar_dados_sistema():
         "decisao": decisao,
         "emergencia": emergencia,
         "status_emergencia": status_emergencia,
+        "hora_pico": hora_pico,
+        "modelo_ia": "Decision Tree - Scikit-learn",
         "data_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
@@ -251,8 +334,7 @@ def historico():
 def simular_emergencia():
     """
     Ativa a emergência por algumas atualizações do dashboard.
-
-    Mais para frente, esta ação será substituída pela leitura real da tag RFID.
+    Futuramente será substituído pela leitura RFID.
     """
 
     global ciclos_emergencia
