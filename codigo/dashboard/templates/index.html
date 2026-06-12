@@ -245,7 +245,15 @@
                 <h3>Tempo Padrão</h3>
                 <div class="valor" id="tempoPadrao">20s</div>
             </div>
+        <div class="card">
+    <h3>Modelo de IA</h3>
+    <div class="valor" id="modeloIa">Carregando...</div>
+     </div>
 
+    <div class="card">
+    <h3>Horário de Pico</h3>
+    <div class="valor" id="horaPico">Carregando...</div>
+        </div>
         </section>
 
         <section class="card-grande">
@@ -345,6 +353,8 @@
                 document.getElementById("cruzamento").textContent = dados.cruzamento;
                 document.getElementById("veiculos").textContent = dados.veiculos;
                 document.getElementById("tempoPadrao").textContent = dados.tempo_padrao + "s";
+                document.getElementById("modeloIa").textContent = dados.modelo_ia || "Decision Tree - Scikit-learn";
+                document.getElementById("horaPico").textContent = dados.hora_pico ? "Sim" : "Não";
                 document.getElementById("tempoIA").textContent = dados.tempo_ia + "s";
 
                 document.getElementById("tempoSemIA").textContent = dados.tempo_sem_ia + "s";
